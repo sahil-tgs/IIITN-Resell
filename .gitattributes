@@ -1,0 +1,29 @@
+# ───────────────────────────────────────────────────────────────────────
+# GitHub Linguist hints — control what gets counted toward repo language
+# statistics. Without this, the lock file + large SVG assets in client/
+# drown out the actual Java backend.
+# ───────────────────────────────────────────────────────────────────────
+
+# Lock files are generated artifacts, never authored by hand.
+**/package-lock.json    linguist-generated=true
+**/yarn.lock            linguist-generated=true
+
+# Static assets aren't code.
+*.svg                   linguist-detectable=false
+*.png                   binary
+*.jpg                   binary
+*.jpeg                  binary
+*.gif                   binary
+*.ico                   binary
+
+# Generated build output (in case it accidentally lands in a checkout).
+**/target/              linguist-generated=true
+**/build/               linguist-generated=true
+**/node_modules/        linguist-vendored=true
+
+# Documentation pages shouldn't dominate the language bar.
+*.md                    linguist-documentation=true
+
+# Force LF line endings for the JVM toolchain.
+* text=auto eol=lf
+*.bat text eol=crlf
