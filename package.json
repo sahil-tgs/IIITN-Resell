@@ -1,0 +1,9 @@
+{
+    "name": "iiitn-resell",
+    "version": "0.1.0",
+    "description": "A college marketplace for second-hand goods",
+    "private": true,
+    "scripts": {
+        "client": "npm start --prefix client"
+    }
+}
