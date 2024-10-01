@@ -1,75 +1,77 @@
+// src/pages/AuthPage.js
 import React, { useState } from 'react';
-import api from '../api/api';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const userData = isLogin
-      ? { email, password }
-      : { email, password, username };
+    setError('');
     try {
-      const response = isLogin
-        ? await api.post('/auth/login', userData)
-        : await api.post('/auth/register', userData);
-      localStorage.setItem('token', response.data.token);
-      window.location.reload(); // Refresh the page after login
-    } catch (error) {
-      console.error('Authentication failed', error);
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const payload = isLogin ? { email, password } : { username, email, password };
+      const response = await axios.post(endpoint, payload);
+      if (isLogin) {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userId', response.data.userId);
+        navigate('/marketplace');
+      } else {
+        setIsLogin(true); // Switch to login form after successful registration
+        setError('Registration successful. Please log in.');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'An error occurred. Please try again.');
     }
   };
 
   return (
-    <div className="p-4 max-w-md mx-auto">
-      <h1 className="text-2xl font-bold mb-4">{isLogin ? 'Login' : 'Register'}</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="max-w-md mx-auto mt-10">
+      <h2 className="text-2xl font-bold mb-5">{isLogin ? 'Login' : 'Register'}</h2>
+      <form onSubmit={handleSubmit} className="space-y-4">
         {!isLogin && (
           <input
             type="text"
-            name="username"
+            placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            placeholder="Username"
-            className="w-full p-2 mb-4 border rounded"
+            className="w-full p-2 border rounded"
             required
           />
         )}
         <input
           type="email"
-          name="email"
+          placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email"
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 border rounded"
           required
         />
         <input
           type="password"
-          name="password"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
-          className="w-full p-2 mb-4 border rounded"
+          className="w-full p-2 border rounded"
           required
         />
-        <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
+        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
           {isLogin ? 'Login' : 'Register'}
         </button>
-        <p className="mt-4">
-          {isLogin ? 'Need an account?' : 'Already have an account?'}
-          <button
-            type="button"
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-blue-500 ml-2"
-          >
-            {isLogin ? 'Register' : 'Login'}
-          </button>
-        </p>
       </form>
+      {error && <p className="text-red-500 mt-3">{error}</p>}
+      <p className="mt-4">
+        {isLogin ? "Don't have an account? " : "Already have an account? "}
+        <button onClick={() => setIsLogin(!isLogin)} className="text-blue-500 hover:underline">
+          {isLogin ? 'Register' : 'Login'}
+        </button>
+      </p>
     </div>
   );
 };

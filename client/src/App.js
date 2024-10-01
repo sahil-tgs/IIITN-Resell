@@ -1,23 +1,70 @@
+// src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import ProductsPage from './pages/ProductsPage';
-import AuthPage from './pages/AuthPage';
-import ProductForm from './components/ProductForm';
+import { AuthProvider } from './context/AuthContext';
+import Navigation from './components/Navigation';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import MarketplacePage from './pages/MarketplacePage';
+import AddProductPage from './pages/AddProductPage';
+import ProductDetailsPage from './pages/ProductDetailsPage';
+import EditProductPage from './pages/EditProductPage';
+import UserProfilePage from './pages/UserProfilePage';
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Route for displaying all products */}
-        <Route path="/" element={<ProductsPage />} />
-        
-        {/* Route for login and registration */}
-        <Route path="/login" element={<AuthPage />} />
-        
-        {/* Route for creating a new product */}
-        <Route path="/create-product" element={<ProductForm />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Navigation />
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route 
+            path="/marketplace" 
+            element={
+              <PrivateRoute>
+                <MarketplacePage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/add-product" 
+            element={
+              <PrivateRoute>
+                <AddProductPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/product/:id" 
+            element={
+              <PrivateRoute>
+                <ProductDetailsPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/edit-product/:id" 
+            element={
+              <PrivateRoute>
+                <EditProductPage />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/profile" 
+            element={
+              <PrivateRoute>
+                <UserProfilePage />
+              </PrivateRoute>
+            } 
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

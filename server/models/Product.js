@@ -1,3 +1,4 @@
+// server/models/Product.js
 const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
@@ -23,7 +24,7 @@ const productSchema = new mongoose.Schema({
   },
   imageUrl: {
     type: String,
-    required: true // Cloudinary URL of the product image
+    required: true
   },
   category: {
     type: String,
@@ -45,9 +46,6 @@ const productSchema = new mongoose.Schema({
     default: false
   }
 }, { timestamps: true });
-
-// Add text index for search functionality
-productSchema.index({ title: 'text', description: 'text', category: 'text' });
 
 const Product = mongoose.model('Product', productSchema);
 
