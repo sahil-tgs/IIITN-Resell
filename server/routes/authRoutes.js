@@ -1,21 +1,19 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
-// POST /register - User Registration
 router.post('/register', async (req, res) => {
   try {
     const { username, email, password } = req.body;
     
-    // Check if user already exists
     const existingUser = await User.findOne({ $or: [{ email }, { username }] });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
     
-    // Create new user
     const newUser = new User({ username, email, password });
     await newUser.save();
     
@@ -25,24 +23,20 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /login - User Authentication
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
-    // Check password
     const isPasswordValid = await user.isValidPassword(password);
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
     
-    // Create and sign JWT token
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -52,6 +46,22 @@ router.post('/login', async (req, res) => {
     res.json({ token, userId: user._id });
   } catch (error) {
     res.status(500).json({ message: 'Error logging in', error: error.message });
+  }
+});
+
+// New route for fetching user profile
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    console.log('User ID from token:', req.user.userId);
+    const user = await User.findById(req.user.userId).select('-password');
+    if (!user) {
+      console.log('User not found for ID:', req.user.userId);
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Error in profile route:', error);
+    res.status(500).json({ message: 'Error fetching user profile', error: error.message });
   }
 });
 

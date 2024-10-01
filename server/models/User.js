@@ -23,9 +23,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
+  isAdmin: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
-// Pre-save hook to hash the password before saving
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   
@@ -38,7 +41,6 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Method to validate password
 userSchema.methods.isValidPassword = async function(password) {
   try {
     return await bcrypt.compare(password, this.password);
