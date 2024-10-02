@@ -1,3 +1,5 @@
+// client/src/api/api.js
+
 import axios from 'axios';
 
 // Set base URL for all API requests
