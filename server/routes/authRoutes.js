@@ -4,6 +4,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const authMiddleware = require('../middleware/authMiddleware');
+const passport = require('passport');
 
 const router = express.Router();
 
@@ -51,18 +52,34 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// New route for fetching user profile
+// Google Authentication Routes
+router.get('/google',
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    prompt: 'select_account'
+  })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  (req, res) => {
+    const token = jwt.sign(
+      { userId: req.user._id, email: req.user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: '1h' }
+    );
+    res.redirect(`${process.env.CLIENT_URL}/auth-success?token=${token}&userId=${req.user._id}`);
+  }
+);
+
 router.get('/profile', authMiddleware, async (req, res) => {
   try {
-    console.log('User ID from token:', req.user.userId);
     const user = await User.findById(req.user.userId).select('-password');
     if (!user) {
-      console.log('User not found for ID:', req.user.userId);
       return res.status(404).json({ message: 'User not found' });
     }
     res.json(user);
   } catch (error) {
-    console.error('Error in profile route:', error);
     res.status(500).json({ message: 'Error fetching user profile', error: error.message });
   }
 });

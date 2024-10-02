@@ -22,17 +22,18 @@ const UserProfilePage = () => {
     }
 
     try {
-      const profileResponse = await axios.get(`${API_BASE_URL}/users/profile`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
+      const [profileResponse, productsResponse] = await Promise.all([
+        axios.get(`${API_BASE_URL}/users/profile`, {
+          headers: { Authorization: `Bearer ${user.token}` }
+        }),
+        axios.get(`${API_BASE_URL}/products/user`, {
+          headers: { Authorization: `Bearer ${user.token}` }
+        })
+      ]);
+
       setUserProfile(profileResponse.data);
       setEditedProfile(profileResponse.data);
-
-      const productsResponse = await axios.get(`${API_BASE_URL}/products`, {
-        headers: { Authorization: `Bearer ${user.token}` }
-      });
-      const userProducts = productsResponse.data.filter(product => product.seller === user.userId);
-      setUserProducts(userProducts);
+      setUserProducts(productsResponse.data);
 
       setLoading(false);
     } catch (err) {

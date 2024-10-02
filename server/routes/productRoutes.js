@@ -64,6 +64,16 @@ router.get('/', async (req, res) => {
   }
 });
 
+// New route: Get products for the authenticated user
+router.get('/user', authMiddleware, async (req, res) => {
+  try {
+    const products = await Product.find({ seller: req.user.userId });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching user products', error: error.message });
+  }
+});
+
 // Get a single product by ID
 router.get('/:id', async (req, res) => {
   try {

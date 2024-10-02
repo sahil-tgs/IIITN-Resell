@@ -1,4 +1,4 @@
-// src/App.js
+// client/src/App.js
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -12,6 +12,7 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import EditProductPage from './pages/EditProductPage';
 import UserProfilePage from './pages/UserProfilePage';
 import PrivateRoute from './components/PrivateRoute';
+import AuthSuccess from './components/AuthSuccess';
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/auth-success" element={<AuthSuccess />} />
           <Route 
             path="/marketplace" 
             element={

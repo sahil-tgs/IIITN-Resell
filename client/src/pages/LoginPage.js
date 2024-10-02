@@ -11,7 +11,7 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,11 +95,30 @@ const LoginPage = () => {
             </div>
 
             <div className="mt-6">
-              <div className="text-center">
-                <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                  Don't have an account? Sign up
-                </Link>
+              <button
+                onClick={googleLogin}
+                className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+              >
+                <img className="h-5 w-5 mr-2" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo" />
+                Sign in with Google
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
               </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
+                Sign up
+              </Link>
             </div>
           </div>
         </div>

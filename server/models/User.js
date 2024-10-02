@@ -19,11 +19,15 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: true,
   },
   profilePicture: {
     type: String,
     default: '',
+  },
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true,
   },
   isAdmin: {
     type: Boolean,
@@ -32,14 +36,16 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+  if (this.isModified('password') && this.password) {
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+      next();
+    } catch (error) {
+      next(error);
+    }
+  } else {
     next();
-  } catch (error) {
-    next(error);
   }
 });
 

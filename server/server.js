@@ -5,31 +5,87 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const cloudinary = require('cloudinary').v2;
+const passport = require('passport');
+const session = require('express-session');
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const authRoutes = require('./routes/authRoutes');
 const productRoutes = require('./routes/productRoutes');
 const userRoutes = require('./routes/userRoutes');
+const User = require('./models/User');
 
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your session secret',
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
 
 // MongoDB connection
 mongoose.connect(process.env.MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000,
-  socketTimeoutMS: 45000,
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
 })
   .then(() => console.log('MongoDB connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
-// Cloudinary configuration
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+// Passport Google Strategy
+passport.use(new GoogleStrategy({
+  clientID: process.env.GOOGLE_CLIENT_ID,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+  callbackURL: "/api/auth/google/callback",
+  proxy: true
+}, async (accessToken, refreshToken, profile, done) => {
+  const email = profile.emails[0].value;
+  
+  // Check if the email is from the @iiitn.ac.in domain
+  if (!email.endsWith('@iiitn.ac.in')) {
+    return done(null, false, { message: 'Only @iiitn.ac.in email addresses are allowed.' });
+  }
+
+  try {
+    let user = await User.findOne({ email: email });
+    if (!user) {
+      user = new User({
+        username: profile.displayName,
+        email: email,
+        googleId: profile.id,
+        profilePicture: profile.photos[0].value
+      });
+      await user.save();
+    } else {
+      // Update existing user's information
+      user.username = profile.displayName;
+      user.googleId = profile.id;
+      user.profilePicture = profile.photos[0].value;
+      await user.save();
+    }
+    return done(null, user);
+  } catch (error) {
+    return done(error);
+  }
+}));
+
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (error) {
+    done(error);
+  }
 });
 
 // Routes
