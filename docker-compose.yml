@@ -1,8 +1,5 @@
 version: "3.9"
 
-# Minimal local stack: Postgres + Redis to start. Kafka, RabbitMQ and
-# Elasticsearch get layered in as their consumers come online.
-
 networks:
   resell-net:
     driver: bridge
@@ -10,6 +7,8 @@ networks:
 volumes:
   postgres-data:
   redis-data:
+  kafka-data:
+  zk-data:
 
 services:
   postgres:
@@ -24,6 +23,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/postgres-init:/docker-entrypoint-initdb.d:ro
     networks: [resell-net]
 
   redis:
@@ -35,4 +35,36 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks: [resell-net]
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.1
+    container_name: resell-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zk-data:/var/lib/zookeeper/data
+    networks: [resell-net]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: resell-kafka
+    restart: unless-stopped
+    depends_on: [zookeeper]
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     networks: [resell-net]
