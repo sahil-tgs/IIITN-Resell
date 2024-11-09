@@ -1,0 +1,36 @@
+server:
+  port: 8084
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/chat_db
+    username: ${POSTGRES_USER:resell}
+    password: ${POSTGRES_PASSWORD:resell}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:resell}
+    password: ${RABBITMQ_PASSWORD:resell}
+
+# netty-socketio listens on its own port (not Spring's HTTP port).
+socketio:
+  host: 0.0.0.0
+  port: 9092
