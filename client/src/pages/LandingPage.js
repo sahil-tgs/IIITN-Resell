@@ -1,58 +1,76 @@
-// src/pages/LandingPage.js
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-const LandingPage = () => {
+const LandingPage = ({ isDarkMode }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth(); // Change this to match your actual auth state property
+
+  const handleBrowseClick = () => {
+    navigate('/marketplace');
+  };
+
+  const handleSellClick = () => {
+    // Check if user exists instead of isAuthenticated
+    if (user) {
+      navigate('/add-product');
+    } else {
+      navigate('/login', { state: { from: { pathname: '/add-product' } } });
+    }
+  };
+
+  // For debugging - remove this in production
+  console.log('Auth status:', { user });
+
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-white shadow">
-        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">IIITN Resell</h1>
-          <nav>
-            <Link to="/login" className="text-blue-600 hover:text-blue-800 mr-4">Login</Link>
-            <Link to="/register" className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-              Sign Up
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-cream text-gray-900'} flex justify-center items-center p-4 relative overflow-hidden transition-colors duration-300`}>
+      {/* Left decoration SVG */}
+      <img 
+        src="/left.svg" 
+        alt="" 
+        className="absolute left-0 h-full object-contain z-10 pointer-events-none"
+        style={{
+          maxWidth: '25%',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
 
-      <main className="flex-grow">
-        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-          <div className="px-4 py-6 sm:px-0">
-            <div className="text-center">
-              <h2 className="text-4xl font-extrabold text-gray-900 sm:text-5xl sm:tracking-tight lg:text-6xl">
-                Buy and Sell on Campus
-              </h2>
-              <p className="mt-5 max-w-xl mx-auto text-xl text-gray-500">
-                IIITN Resell is the marketplace for IIIT Nagpur students and faculty to buy and sell second-hand items.
-              </p>
-              <div className="mt-5 max-w-md mx-auto sm:flex sm:justify-center md:mt-8">
-                <div className="rounded-md shadow">
-                  <Link to="/marketplace" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 md:py-4 md:text-lg md:px-10">
-                    Browse Marketplace
-                  </Link>
-                </div>
-                <div className="mt-3 rounded-md shadow sm:mt-0 sm:ml-3">
-                  <Link to="/add-product" className="w-full flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
-                    Sell an Item
-                  </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Right decoration SVG */}
+      <img 
+        src="/right.svg" 
+        alt="" 
+        className="absolute right-0 h-full object-contain z-10 pointer-events-none"
+        style={{
+          maxWidth: '25%',
+          top: '50%',
+          transform: 'translateY(-50%)'
+        }}
+      />
+      
+      {/* Main content */}
+      <div className="max-w-4xl w-full z-20 text-center">
+        <h1 className="text-5xl md:text-6xl lg:text-[78px] font-extrabold leading-tight mb-6" style={{ fontFamily: 'Inter, sans-serif' }}>
+          Looking to<br />clear space ?
+        </h1>
+        <p className="text-base md:text-lg lg:text-[18px] mx-auto max-w-2xl mb-8" style={{ fontFamily: 'Open Sans, sans-serif' }}>
+          IITN Resell is the marketplace for IIIT Nagpur students and faculty to buy and sell second-hand items.
+        </p>
+        <div className="flex flex-col sm:flex-row justify-center gap-4 sm:gap-5">
+          <button 
+            onClick={handleBrowseClick}
+            className={`px-6 py-3 ${isDarkMode ? 'bg-blue-400 hover:bg-blue-500' : 'bg-blue-600 hover:bg-blue-700'} text-white rounded-full text-lg font-semibold transition duration-300 w-full sm:w-auto`}
+          >
+            Browse Marketplace
+          </button>
+          <button 
+            onClick={handleSellClick}
+            className={`px-6 py-3 bg-transparent ${isDarkMode ? 'text-blue-400 border-blue-400 hover:bg-blue-900' : 'text-blue-600 border-blue-600 hover:bg-blue-50'} border rounded-full text-lg font-semibold transition duration-300 w-full sm:w-auto`}
+          >
+            Sell an Item
+          </button>
         </div>
-      </main>
-
-      <footer className="bg-white">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
-          <div className="mt-8 md:mt-0 md:order-1">
-            <p className="text-center text-base text-gray-400">
-              &copy; 2023 IIITN Resell. All rights reserved.
-            </p>
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   );
 };

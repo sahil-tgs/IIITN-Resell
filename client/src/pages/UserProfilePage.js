@@ -1,21 +1,23 @@
-// src/pages/UserProfilePage.js
+// src/pages/UserProfilePage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import API_BASE_URL from '../config/api';
 import { useAuth } from '../context/AuthContext';
+import { Package, Edit2, Trash2, Grid, List, Plus, User as UserIcon, Mail } from 'lucide-react';
 
-const UserProfilePage = () => {
+const UserProfilePage = ({ isDarkMode }) => {
   const [userProfile, setUserProfile] = useState(null);
   const [userProducts, setUserProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [editedProfile, setEditedProfile] = useState({});
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
   const { user } = useAuth();
 
   const fetchUserData = useCallback(async () => {
-    if (!user || !user.token) {
+    if (!user?.token) {
       setError('User not authenticated. Please log in again.');
       setLoading(false);
       return;
@@ -34,7 +36,6 @@ const UserProfilePage = () => {
       setUserProfile(profileResponse.data);
       setEditedProfile(profileResponse.data);
       setUserProducts(productsResponse.data);
-
       setLoading(false);
     } catch (err) {
       console.error('Error fetching user data:', err);
@@ -47,10 +48,6 @@ const UserProfilePage = () => {
     fetchUserData();
   }, [fetchUserData]);
 
-  const handleEdit = () => {
-    setIsEditing(true);
-  };
-
   const handleSave = async () => {
     try {
       await axios.put(`${API_BASE_URL}/users/profile`, editedProfile, {
@@ -62,10 +59,6 @@ const UserProfilePage = () => {
       console.error('Error updating profile:', err);
       setError('Failed to update profile. Please try again.');
     }
-  };
-
-  const handleChange = (e) => {
-    setEditedProfile({ ...editedProfile, [e.target.name]: e.target.value });
   };
 
   const handleDelete = async (productId) => {
@@ -82,91 +75,232 @@ const UserProfilePage = () => {
     }
   };
 
-  if (loading) return <div className="text-center mt-8">Loading...</div>;
-  if (error) return <div className="text-center mt-8 text-red-500">{error}</div>;
-  if (!userProfile) return <div className="text-center mt-8">User profile not found.</div>;
+  if (loading) return (
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
+    </div>
+  );
+
+  if (error) return (
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex items-center justify-center`}>
+      <div className="text-red-500 text-center">
+        <h2 className="text-2xl font-bold mb-2">Oops!</h2>
+        <p>{error}</p>
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto mt-10 p-6 bg-white rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-6">User Profile</h1>
-      
-      <div className="mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Personal Information</h2>
-        {isEditing ? (
-          <>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="username">
-                Username
-              </label>
-              <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="username"
-                type="text"
-                name="username"
-                value={editedProfile.username}
-                onChange={handleChange}
-              />
-            </div>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
-                Email
-              </label>
-              <input
-                className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                id="email"
-                type="email"
-                name="email"
-                value={editedProfile.email}
-                onChange={handleChange}
-              />
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {/* Profile Section */}
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg p-6 mb-8`}>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+            <div className="flex items-center gap-4">
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <UserIcon size={32} className="text-gray-400" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold">{userProfile.username}</h1>
+                <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>{userProfile.email}</p>
+              </div>
             </div>
             <button
-              onClick={handleSave}
-              className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+              onClick={() => setIsEditing(!isEditing)}
+              className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+                isDarkMode 
+                  ? 'bg-gray-700 hover:bg-gray-600' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              } transition-colors duration-200`}
             >
-              Save Details
+              <Edit2 size={18} />
+              {isEditing ? 'Cancel Edit' : 'Edit Profile'}
             </button>
-          </>
-        ) : (
-          <>
-            <p><strong>Username:</strong> {userProfile.username}</p>
-            <p><strong>Email:</strong> {userProfile.email}</p>
-            <button
-              onClick={handleEdit}
-              className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-            >
-              Edit Profile
-            </button>
-          </>
-        )}
-      </div>
+          </div>
 
-      <div>
-        <h2 className="text-2xl font-semibold mb-4">Your Listings</h2>
-        <Link to="/add-product" className="mb-4 inline-block bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600">
-          Add New Product
-        </Link>
-        {userProducts.length === 0 ? (
-          <p>You haven't listed any products yet.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {userProducts.map(product => (
-              <div key={product._id} className="border rounded-lg p-4">
-                <img src={product.imageUrl} alt={product.title} className="w-full h-40 object-cover rounded-md mb-2"/>
-                <h3 className="font-semibold">{product.title}</h3>
-                <p className="text-gray-600">₹{product.price}</p>
-                <div className="mt-2">
-                  <Link to={`/edit-product/${product._id}`} className="text-blue-500 hover:text-blue-700 mr-2">
-                    Edit
-                  </Link>
-                  <button onClick={() => handleDelete(product._id)} className="text-red-500 hover:text-red-700">
-                    Delete
-                  </button>
+          {isEditing && (
+            <div className="space-y-4">
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Username
+                </label>
+                <div className="relative">
+                  <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="text"
+                    name="username"
+                    value={editedProfile.username}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, username: e.target.value })}
+                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-gray-50 border-gray-200 text-gray-900'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
                 </div>
               </div>
-            ))}
+              <div>
+                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+                  <input
+                    type="email"
+                    name="email"
+                    value={editedProfile.email}
+                    onChange={(e) => setEditedProfile({ ...editedProfile, email: e.target.value })}
+                    className={`w-full pl-10 pr-4 py-2 rounded-lg border ${
+                      isDarkMode 
+                        ? 'bg-gray-700 border-gray-600 text-white' 
+                        : 'bg-gray-50 border-gray-200 text-gray-900'
+                    } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={handleSave}
+                className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+              >
+                Save Changes
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Products Section */}
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-lg p-6`}>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <h2 className="text-2xl font-bold">Your Listings</h2>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'}`}>
+                {userProducts.length} {userProducts.length === 1 ? 'product' : 'products'} listed
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className={`flex items-center gap-2 p-1 rounded-lg ${isDarkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`p-2 rounded ${viewMode === 'grid' ? 'bg-blue-500 text-white' : ''}`}
+                >
+                  <Grid size={20} />
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`p-2 rounded ${viewMode === 'list' ? 'bg-blue-500 text-white' : ''}`}
+                >
+                  <List size={20} />
+                </button>
+              </div>
+              <Link
+                to="/add-product"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+              >
+                <Plus size={20} />
+                Add New Listing
+              </Link>
+            </div>
           </div>
-        )}
+
+          {userProducts.length === 0 ? (
+            <div className="text-center py-12">
+              <Package size={48} className="mx-auto mb-4 text-gray-400" />
+              <p className="text-xl font-medium mb-2">No products listed yet</p>
+              <p className={`${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-4`}>
+                Start selling by adding your first product
+              </p>
+              <Link
+                to="/add-product"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+              >
+                <Plus size={20} />
+                Add Product
+              </Link>
+            </div>
+          ) : (
+            <div className={viewMode === 'grid' 
+              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              : "space-y-4"
+            }>
+              {userProducts.map(product => (
+                <div 
+                  key={product._id} 
+                  className={`${isDarkMode ? 'bg-gray-700' : 'bg-gray-50'} rounded-xl overflow-hidden transition-all duration-300 hover:-translate-y-1`}
+                >
+                  {viewMode === 'grid' ? (
+                    // Grid View
+                    <>
+                      <div className="aspect-video">
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.title} 
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-lg mb-2">{product.title}</h3>
+                        <p className="text-xl font-bold text-blue-500 mb-4">₹{product.price.toLocaleString()}</p>
+                        <div className="flex justify-between items-center">
+                          <Link 
+                            to={`/edit-product/${product._id}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+                          >
+                            <Edit2 size={16} />
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(product._id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                              isDarkMode 
+                                ? 'bg-gray-600 hover:bg-gray-500' 
+                                : 'bg-gray-200 hover:bg-gray-300'
+                            } transition-colors duration-200`}
+                          >
+                            <Trash2 size={16} />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    // List View
+                    <div className="flex gap-4 p-4">
+                      <img 
+                        src={product.imageUrl} 
+                        alt={product.title} 
+                        className="w-24 h-24 object-cover rounded-lg"
+                      />
+                      <div className="flex-grow">
+                        <h3 className="font-semibold text-lg mb-1">{product.title}</h3>
+                        <p className="text-xl font-bold text-blue-500 mb-2">₹{product.price.toLocaleString()}</p>
+                        <div className="flex gap-2">
+                          <Link 
+                            to={`/edit-product/${product._id}`}
+                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+                          >
+                            <Edit2 size={16} />
+                            Edit
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(product._id)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full ${
+                              isDarkMode 
+                                ? 'bg-gray-600 hover:bg-gray-500' 
+                                : 'bg-gray-200 hover:bg-gray-300'
+                            } transition-colors duration-200`}
+                          >
+                            <Trash2 size={16} />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
