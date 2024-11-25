@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+  cloud:
+    gateway:
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_UNIQUE
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "${CLIENT_URL:http://localhost:3000}"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
+      routes:
+        - id: auth-service
+          uri: lb://auth-service
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@ipKeyResolver}"
+
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/users/**
+
+        - id: product-service
+          uri: lb://product-service
+          predicates:
+            - Path=/api/products/**
+
+        - id: chat-service
+          uri: lb://chat-service
+          predicates:
+            - Path=/api/chat/**
+
+        - id: search-service
+          uri: lb://search-service
+          predicates:
+            - Path=/api/search/**
+
+        - id: analytics-service
+          uri: lb://analytics-service
+          predicates:
+            - Path=/api/analytics/**
+
+# Routes that DO NOT require auth (the gateway's JWT filter skips them).
+security:
+  public-paths:
+    - /api/auth/login
+    - /api/auth/register
+    - /api/auth/google
+    - /api/auth/google/callback
+    - /api/products
+    - /api/products/**
+    - /api/search/**
