@@ -1,4 +1,5 @@
-// src/pages/MarketplacePage.jsx
+// Updated MarketplacePage.jsx to filter out sold products
+
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
@@ -19,6 +20,11 @@ const ProductCard = ({ product, isDarkMode }) => {
           alt={product.title}
           className="w-full h-full object-cover"
         />
+        {product.isSold && (
+          <div className="absolute top-0 right-0 m-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded">
+            SOLD OUT
+          </div>
+        )}
       </div>
       <div className="p-5">
         <h3
@@ -78,6 +84,7 @@ const MarketplacePage = ({ isDarkMode }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [priceFilter, setPriceFilter] = useState("");
+  const [showSoldItems, setShowSoldItems] = useState(false); // New state for sold items filter
   const { user } = useAuth();
 
   useEffect(() => {
@@ -91,7 +98,13 @@ const MarketplacePage = ({ isDarkMode }) => {
         const productsData = response.data.products || response.data;
 
         setProducts(productsData);
-        setFilteredProducts(productsData);
+
+        // By default, we filter out sold products for the marketplace
+        const availableProducts = productsData.filter(
+          (product) => !product.isSold
+        );
+        setFilteredProducts(availableProducts);
+
         setLoading(false);
       } catch (err) {
         console.error("Error fetching products:", err);
@@ -104,14 +117,31 @@ const MarketplacePage = ({ isDarkMode }) => {
   }, [user.token]);
 
   useEffect(() => {
-    const results = products.filter(
-      (product) =>
-        product.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (categoryFilter === "" || product.category === categoryFilter) &&
-        (priceFilter === "" || filterByPrice(product.price, priceFilter))
-    );
+    // Apply filters, including the sold items filter
+    const results = products.filter((product) => {
+      // Filter by search term
+      const matchesSearch = product.title
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+
+      // Filter by category
+      const matchesCategory =
+        categoryFilter === "" || product.category === categoryFilter;
+
+      // Filter by price
+      const matchesPrice =
+        priceFilter === "" || filterByPrice(product.price, priceFilter);
+
+      // Filter by sold status
+      const matchesSoldStatus = showSoldItems ? true : !product.isSold;
+
+      return (
+        matchesSearch && matchesCategory && matchesPrice && matchesSoldStatus
+      );
+    });
+
     setFilteredProducts(results);
-  }, [searchTerm, categoryFilter, priceFilter, products]);
+  }, [searchTerm, categoryFilter, priceFilter, showSoldItems, products]);
 
   const filterByPrice = (price, filter) => {
     switch (filter) {
@@ -126,13 +156,16 @@ const MarketplacePage = ({ isDarkMode }) => {
     }
   };
 
-  const categories = [...new Set(products.map((product) => product.category))];
+  // Get unique categories from products
+  const categories = [
+    ...new Set(products.map((product) => product.category)),
+  ].filter(Boolean);
 
   if (loading)
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
-          isDarkMode ? "bg-gray-900 text-white" : "bg-cream text-gray-900"
+          isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
         }`}
       >
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
@@ -143,7 +176,7 @@ const MarketplacePage = ({ isDarkMode }) => {
     return (
       <div
         className={`min-h-screen flex items-center justify-center ${
-          isDarkMode ? "bg-gray-900 text-white" : "bg-cream text-gray-900"
+          isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
         }`}
       >
         <div className="text-red-500 text-center">
@@ -156,7 +189,7 @@ const MarketplacePage = ({ isDarkMode }) => {
   return (
     <div
       className={`min-h-screen ${
-        isDarkMode ? "bg-gray-900 text-white" : "bg-cream text-gray-900"
+        isDarkMode ? "bg-gray-900 text-white" : "bg-gray-50 text-gray-900"
       } transition-colors duration-300`}
     >
       {/* Main Content */}
@@ -199,7 +232,7 @@ const MarketplacePage = ({ isDarkMode }) => {
             isDarkMode ? "bg-gray-800" : "bg-white"
           } p-6 rounded-2xl shadow-lg mb-8 transition-colors duration-300`}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
             <div className="relative">
               <Search
                 className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
@@ -268,6 +301,23 @@ const MarketplacePage = ({ isDarkMode }) => {
               </select>
             </div>
           </div>
+
+          {/* Show Sold Items Checkbox */}
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showSoldItems"
+              checked={showSoldItems}
+              onChange={() => setShowSoldItems(!showSoldItems)}
+              className="w-4 h-4 mr-2 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label
+              htmlFor="showSoldItems"
+              className={`${isDarkMode ? "text-gray-300" : "text-gray-700"}`}
+            >
+              Show sold out items
+            </label>
+          </div>
         </div>
 
         {/* Products Grid */}
@@ -298,5 +348,5 @@ const MarketplacePage = ({ isDarkMode }) => {
     </div>
   );
 };
-
+    
 export default MarketplacePage;

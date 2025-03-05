@@ -1,4 +1,4 @@
-// client/src/pages/ProductDetailsPage.jsx
+// ProductDetailsPage.jsx without comments section
 
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -14,12 +14,9 @@ import {
   Edit2,
   Trash2,
   AlertTriangle,
-  Phone,
   Mail,
-  Star,
   ChevronLeft,
   ChevronRight,
-  Send,
 } from "lucide-react";
 
 const ProductDetailsPage = ({ isDarkMode }) => {
@@ -28,44 +25,15 @@ const ProductDetailsPage = ({ isDarkMode }) => {
   const [error, setError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [comment, setComment] = useState("");
   const { id } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Placeholder images array
-  const images = [
-    product?.imageUrl,
-    "https://via.placeholder.com/600x400?text=Image+2",
-    "https://via.placeholder.com/600x400?text=Image+3",
-  ];
-
-  // Placeholder comments array
-  const placeholderComments = [
-    {
-      id: 1,
-      user: "John Doe",
-      comment: "Great product! Is it still available?",
-      timestamp: "2 hours ago",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-    },
-    {
-      id: 2,
-      user: "Jane Smith",
-      comment: "Interested in buying. What's the best price?",
-      timestamp: "1 day ago",
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-    },
-  ];
-
-  // Placeholder seller details
-  const sellerDetails = {
-    name: "Alex Johnson",
-    joiningDate: "Member since Jan 2024",
-    phone: "+91 98765 43210",
-    email: "alex@example.com",
-    rating: 4.5,
-    totalListings: 12,
+  // Placeholder for multiple images (only product.imageUrl is real for now)
+  const getImagesArray = (mainImage) => {
+    return [mainImage];
+    // In the future, you can expand this to include multiple images
+    // return [mainImage, image2Url, image3Url];
   };
 
   useEffect(() => {
@@ -75,6 +43,7 @@ const ProductDetailsPage = ({ isDarkMode }) => {
           headers: { Authorization: `Bearer ${user.token}` },
         });
         setProduct(response.data);
+        console.log("Product data received:", response.data);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching product:", err);
@@ -98,11 +67,32 @@ const ProductDetailsPage = ({ isDarkMode }) => {
   };
 
   const handlePrevImage = () => {
+    const images = getImagesArray(product?.imageUrl);
     setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNextImage = () => {
+    const images = getImagesArray(product?.imageUrl);
     setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    return `Member since ${date.toLocaleDateString("en-US", {
+      month: "short",
+      year: "numeric",
+    })}`;
+  };
+
+  // Check if the current user is the seller of the product
+  const isCurrentUserSeller = () => {
+    if (!product || !product.seller || !user) return false;
+
+    // Sometimes the seller might be populated as a full object, other times just an ID
+    const sellerId =
+      typeof product.seller === "object" ? product.seller._id : product.seller;
+    return user.userId === sellerId;
   };
 
   if (loading)
@@ -130,6 +120,19 @@ const ProductDetailsPage = ({ isDarkMode }) => {
         </div>
       </div>
     );
+
+  // Get the images array for the carousel
+  const images = getImagesArray(product?.imageUrl);
+
+  // Extract seller information safely
+  const sellerInfo = product?.seller || {};
+  const sellerIsObject = typeof sellerInfo === "object";
+  const sellerName = sellerIsObject ? sellerInfo.username : "Unknown Seller";
+  const sellerCreatedAt = sellerIsObject ? sellerInfo.createdAt : null;
+  const sellerEmail = sellerIsObject ? sellerInfo.email : null;
+  const sellerProfilePicture = sellerIsObject
+    ? sellerInfo.profilePicture
+    : null;
 
   return (
     <div
@@ -179,27 +182,29 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                 </>
               )}
             </div>
-            <div className="flex gap-2 overflow-x-auto py-2">
-              {images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
-                    currentImageIndex === index
-                      ? "border-blue-500"
-                      : isDarkMode
-                      ? "border-gray-700"
-                      : "border-gray-200"
-                  }`}
-                >
-                  <img
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto py-2">
+                {images.map((img, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentImageIndex(index)}
+                    className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                      currentImageIndex === index
+                        ? "border-blue-500"
+                        : isDarkMode
+                        ? "border-gray-700"
+                        : "border-gray-200"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Right Column - Product Details */}
@@ -249,7 +254,7 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {product?.category}
+                        {product?.category || "Uncategorized"}
                       </p>
                     </div>
                   </div>
@@ -275,7 +280,7 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {product?.condition}
+                        {product?.condition || "Not specified"}
                       </p>
                     </div>
                   </div>
@@ -301,7 +306,7 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                           isDarkMode ? "text-white" : "text-gray-900"
                         }`}
                       >
-                        {product?.location}
+                        {product?.location || "Not specified"}
                       </p>
                     </div>
                   </div>
@@ -314,7 +319,7 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                   <MessageCircle size={20} />
                   Contact Seller
                 </button>
-                {user.userId === product?.seller && (
+                {isCurrentUserSeller() && (
                   <>
                     <Link
                       to={`/edit-product/${product?._id}`}
@@ -334,15 +339,23 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                 )}
               </div>
 
-              {/* Seller Information */}
+              {/* Seller Information - Using real seller data from product */}
               <div
                 className={`${
                   isDarkMode ? "bg-gray-700" : "bg-gray-50"
                 } rounded-xl p-4`}
               >
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
-                    <User size={32} className="text-blue-500" />
+                  <div className="w-16 h-16 rounded-full overflow-hidden bg-blue-100 flex items-center justify-center">
+                    {sellerProfilePicture ? (
+                      <img
+                        src={sellerProfilePicture}
+                        alt={sellerName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <User size={32} className="text-blue-500" />
+                    )}
                   </div>
                   <div>
                     <h3
@@ -350,129 +363,32 @@ const ProductDetailsPage = ({ isDarkMode }) => {
                         isDarkMode ? "text-white" : "text-gray-900"
                       }`}
                     >
-                      {sellerDetails.name}
+                      {sellerName}
                     </h3>
                     <p
                       className={`text-sm ${
                         isDarkMode ? "text-gray-400" : "text-gray-600"
                       }`}
                     >
-                      {sellerDetails.joiningDate}
+                      {formatDate(sellerCreatedAt)}
                     </p>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Star
-                        className="fill-yellow-400 stroke-yellow-400"
-                        size={16}
-                      />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {/* Show email if available */}
+                  {sellerEmail && (
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} className="text-blue-500" />
                       <span
                         className={isDarkMode ? "text-white" : "text-gray-900"}
                       >
-                        {sellerDetails.rating}
-                      </span>
-                      <span
-                        className={`text-sm ${
-                          isDarkMode ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        • {sellerDetails.totalListings} listings
+                        {sellerEmail}
                       </span>
                     </div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center gap-2">
-                    <Phone size={16} className="text-blue-500" />
-                    <span
-                      className={isDarkMode ? "text-white" : "text-gray-900"}
-                    >
-                      {sellerDetails.phone}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Mail size={16} className="text-blue-500" />
-                    <span
-                      className={isDarkMode ? "text-white" : "text-gray-900"}
-                    >
-                      {sellerDetails.email}
-                    </span>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Comments Section */}
-        <div
-          className={`${
-            isDarkMode ? "bg-gray-800" : "bg-white"
-          } rounded-2xl p-6`}
-        >
-          <h2
-            className={`text-2xl font-bold mb-6 ${
-              isDarkMode ? "text-white" : "text-gray-900"
-            }`}
-          >
-            Comments
-          </h2>
-
-          {/* Add Comment */}
-          <div className="mb-6">
-            <div className="flex gap-4">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                <User size={20} className="text-blue-500" />
-              </div>
-              <div className="flex-1">
-                <input
-                  type="text"
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  placeholder="Write a comment..."
-                  className={`w-full px-4 py-2 rounded-full border ${
-                    isDarkMode
-                      ? "bg-gray-700 border-gray-600 text-white placeholder-gray-400"
-                      : "bg-white border-gray-200 text-gray-900 placeholder-gray-500"
-                  } focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                />
-              </div>
-              <button className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200">
-                <Send size={20} />
-              </button>
-            </div>
-          </div>
-
-          {/* Comments List */}
-          <div className="space-y-6">
-            {placeholderComments.map((comment) => (
-              <div key={comment.id} className="flex gap-4">
-                <img
-                  src={comment.avatar}
-                  alt={comment.user}
-                  className="w-10 h-10 rounded-full"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={`font-medium ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {comment.user}
-                    </span>
-                    <span
-                      className={`text-sm ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                    >
-                      {comment.timestamp}
-                    </span>
-                  </div>
-                  <p className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
-                    {comment.comment}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -529,3 +445,4 @@ const ProductDetailsPage = ({ isDarkMode }) => {
 };
 
 export default ProductDetailsPage;
+  

@@ -18,6 +18,9 @@ import {
   Eye,
   EyeOff,
   Loader,
+  Trash2,
+  Check,
+  ShoppingBag,
 } from "lucide-react";
 
 const UserProfilePage = ({ isDarkMode }) => {
@@ -42,6 +45,12 @@ const UserProfilePage = ({ isDarkMode }) => {
   const [imagePreview, setImagePreview] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Product action states
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [productToMarkSold, setProductToMarkSold] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+
   const { user } = useAuth();
 
   useEffect(() => {
@@ -208,6 +217,67 @@ const UserProfilePage = ({ isDarkMode }) => {
       );
     } finally {
       setUpdateLoading(false);
+    }
+  };
+
+  // Product management functions
+  const handleDeleteProduct = async (productId) => {
+    setActionLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      await axios.delete(`${API_BASE_URL}/products/${productId}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      });
+
+      // Remove the deleted product from the state
+      setUserProducts((prevProducts) =>
+        prevProducts.filter((product) => product._id !== productId)
+      );
+
+      setSuccessMessage("Product deleted successfully!");
+      setProductToDelete(null);
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to delete product");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleToggleSoldStatus = async (product) => {
+    setActionLoading(true);
+    setError("");
+    setSuccessMessage("");
+
+    try {
+      const newSoldStatus = !product.isSold;
+
+      const response = await axios.put(
+        `${API_BASE_URL}/products/${product._id}`,
+        { isSold: newSoldStatus },
+        {
+          headers: { Authorization: `Bearer ${user.token}` },
+        }
+      );
+
+      // Update the product in the state
+      setUserProducts((prevProducts) =>
+        prevProducts.map((p) =>
+          p._id === product._id ? { ...p, isSold: newSoldStatus } : p
+        )
+      );
+
+      setSuccessMessage(
+        `Product marked as ${newSoldStatus ? "sold" : "available"}!`
+      );
+      setProductToMarkSold(null);
+    } catch (err) {
+      setError(
+        err.response?.data?.message || "Failed to update product status"
+      );
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -714,20 +784,34 @@ const UserProfilePage = ({ isDarkMode }) => {
                       alt={product.title}
                       className="w-full h-full object-cover"
                     />
+
+                    {/* Sold Out Overlay */}
                     {product.isSold && (
-                      <div className="absolute top-0 right-0 m-2 px-2 py-1 bg-red-500 text-white text-xs font-bold rounded">
-                        SOLD
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold transform -rotate-12">
+                          SOLD OUT
+                        </div>
                       </div>
                     )}
                   </div>
+
                   <div className="p-4">
-                    <h3
-                      className={`font-semibold text-lg mb-2 ${
-                        isDarkMode ? "text-white" : "text-gray-900"
-                      }`}
-                    >
-                      {product.title}
-                    </h3>
+                    <div className="flex justify-between items-start mb-2">
+                      <h3
+                        className={`font-semibold text-lg ${
+                          isDarkMode ? "text-white" : "text-gray-900"
+                        }`}
+                      >
+                        {product.title}
+                      </h3>
+
+                      {product.isSold && (
+                        <span className="bg-red-600 text-white text-xs px-2 py-1 rounded-full">
+                          SOLD
+                        </span>
+                      )}
+                    </div>
+
                     <p
                       className={`text-xl font-bold ${
                         isDarkMode ? "text-blue-400" : "text-blue-600"
@@ -735,30 +819,37 @@ const UserProfilePage = ({ isDarkMode }) => {
                     >
                       ₹{product.price.toLocaleString()}
                     </p>
+
                     <div className="flex flex-wrap gap-2 mb-4">
-                      <span
-                        className={`text-sm px-2 py-1 rounded-full ${
-                          isDarkMode
-                            ? "bg-gray-700 text-gray-300"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {product.condition}
-                      </span>
-                      <span
-                        className={`text-sm px-2 py-1 rounded-full ${
-                          isDarkMode
-                            ? "bg-gray-700 text-gray-300"
-                            : "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {product.category}
-                      </span>
+                      {product.condition && (
+                        <span
+                          className={`text-sm px-2 py-1 rounded-full ${
+                            isDarkMode
+                              ? "bg-gray-700 text-gray-300"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {product.condition}
+                        </span>
+                      )}
+                      {product.category && (
+                        <span
+                          className={`text-sm px-2 py-1 rounded-full ${
+                            isDarkMode
+                              ? "bg-gray-700 text-gray-300"
+                              : "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {product.category}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex gap-2">
+
+                    {/* View & Edit Buttons */}
+                    <div className="grid grid-cols-2 gap-2 mb-2">
                       <Link
                         to={`/product/${product._id}`}
-                        className={`flex-1 text-center py-2 rounded-full ${
+                        className={`text-center py-2 rounded-full ${
                           isDarkMode
                             ? "bg-gray-700 hover:bg-gray-600 text-white"
                             : "bg-gray-100 hover:bg-gray-200 text-gray-800"
@@ -768,7 +859,7 @@ const UserProfilePage = ({ isDarkMode }) => {
                       </Link>
                       <Link
                         to={`/edit-product/${product._id}`}
-                        className={`flex-1 text-center py-2 rounded-full ${
+                        className={`text-center py-2 rounded-full ${
                           isDarkMode
                             ? "bg-blue-500 hover:bg-blue-600 text-white"
                             : "bg-blue-600 hover:bg-blue-700 text-white"
@@ -776,6 +867,48 @@ const UserProfilePage = ({ isDarkMode }) => {
                       >
                         Edit
                       </Link>
+                    </div>
+
+                    {/* Mark As Sold & Delete Buttons */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {/* Toggle Sold Status Button */}
+                      <button
+                        onClick={() => setProductToMarkSold(product)}
+                        className={`flex items-center justify-center gap-1 py-2 rounded-full transition-colors duration-200 ${
+                          product.isSold
+                            ? isDarkMode
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : "bg-green-600 hover:bg-green-700 text-white"
+                            : isDarkMode
+                            ? "bg-orange-600 hover:bg-orange-700 text-white"
+                            : "bg-orange-600 hover:bg-orange-700 text-white"
+                        }`}
+                      >
+                        {product.isSold ? (
+                          <>
+                            <ShoppingBag size={16} />
+                            <span>Mark Available</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} />
+                            <span>Mark Sold</span>
+                          </>
+                        )}
+                      </button>
+
+                      {/* Delete Button */}
+                      <button
+                        onClick={() => setProductToDelete(product)}
+                        className={`flex items-center justify-center gap-1 py-2 rounded-full ${
+                          isDarkMode
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-red-600 hover:bg-red-700 text-white"
+                        } transition-colors duration-200`}
+                      >
+                        <Trash2 size={16} />
+                        <span>Delete</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -810,6 +943,121 @@ const UserProfilePage = ({ isDarkMode }) => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {productToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            className={`${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            } rounded-2xl p-6 max-w-md mx-4`}
+          >
+            <h3
+              className={`text-xl font-bold mb-4 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              Delete Product
+            </h3>
+            <p
+              className={`mb-6 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}
+            >
+              Are you sure you want to delete "{productToDelete.title}"? This
+              action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setProductToDelete(null)}
+                disabled={actionLoading}
+                className={`px-4 py-2 rounded-full ${
+                  isDarkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                } transition-colors duration-200 disabled:opacity-50`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDeleteProduct(productToDelete._id)}
+                disabled={actionLoading}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors duration-200 disabled:opacity-50"
+              >
+                {actionLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader size={16} className="animate-spin" />
+                    <span>Deleting...</span>
+                  </div>
+                ) : (
+                  "Delete Product"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mark as Sold Confirmation Modal */}
+      {productToMarkSold && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div
+            className={`${
+              isDarkMode ? "bg-gray-800" : "bg-white"
+            } rounded-2xl p-6 max-w-md mx-4`}
+          >
+            <h3
+              className={`text-xl font-bold mb-4 ${
+                isDarkMode ? "text-white" : "text-gray-900"
+              }`}
+            >
+              {productToMarkSold.isSold ? "Mark as Available" : "Mark as Sold"}
+            </h3>
+            <p
+              className={`mb-6 ${
+                isDarkMode ? "text-gray-300" : "text-gray-600"
+              }`}
+            >
+              {productToMarkSold.isSold
+                ? `Are you sure you want to mark "${productToMarkSold.title}" as available? It will appear in the marketplace again.`
+                : `Are you sure you want to mark "${productToMarkSold.title}" as sold? It will no longer appear in the marketplace.`}
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setProductToMarkSold(null)}
+                disabled={actionLoading}
+                className={`px-4 py-2 rounded-full ${
+                  isDarkMode
+                    ? "bg-gray-700 hover:bg-gray-600 text-gray-300"
+                    : "bg-gray-100 hover:bg-gray-200 text-gray-600"
+                } transition-colors duration-200 disabled:opacity-50`}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleToggleSoldStatus(productToMarkSold)}
+                disabled={actionLoading}
+                className={`px-4 py-2 ${
+                  productToMarkSold.isSold
+                    ? "bg-green-500 hover:bg-green-600"
+                    : "bg-orange-500 hover:bg-orange-600"
+                } text-white rounded-full transition-colors duration-200 disabled:opacity-50`}
+              >
+                {actionLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader size={16} className="animate-spin" />
+                    <span>Updating...</span>
+                  </div>
+                ) : productToMarkSold.isSold ? (
+                  "Mark as Available"
+                ) : (
+                  "Mark as Sold"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
