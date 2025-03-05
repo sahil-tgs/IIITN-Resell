@@ -1,4 +1,5 @@
-// client/src/components/AuthSuccess.js
+// client/src/components/AuthSuccess.jsx
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

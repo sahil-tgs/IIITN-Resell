@@ -32,7 +32,7 @@ const upload = multer({
   },
 });
 
-// View user profile - Fixed
+// View user profile
 router.get("/profile", authMiddleware, async (req, res, next) => {
   try {
     const userId = req.user.userId;
@@ -91,50 +91,82 @@ router.put("/profile", authMiddleware, async (req, res, next) => {
   }
 });
 
-// Change password
+// Complete rewrite of change password endpoint
 router.put("/change-password", authMiddleware, async (req, res, next) => {
   try {
+    console.log("Password change request received");
     const { currentPassword, newPassword } = req.body;
 
-    // Validate input
+    // Input validation
     if (!currentPassword || !newPassword) {
+      console.log("Missing required fields");
       return res
         .status(400)
         .json({ message: "Current password and new password are required" });
     }
 
     if (newPassword.length < 6) {
+      console.log("New password too short");
       return res
         .status(400)
         .json({ message: "New password must be at least 6 characters long" });
     }
 
+    // Find the user by ID
     const user = await User.findById(req.user.userId);
+
     if (!user) {
+      console.log(`User not found with ID: ${req.user.userId}`);
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Debugging: Check if password field exists
+    console.log(`User found: ${user.email}`);
+    console.log(`Password field exists: ${!!user.password}`);
+
     // Check if user has a password (Google OAuth users might not have one)
     if (!user.password) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "No password set for this account. This may be a Google-linked account.",
-        });
+      console.log("No password set for this account");
+      return res.status(400).json({
+        message:
+          "No password set for this account. This may be a Google-linked account.",
+      });
     }
 
+    // Manually verify the current password
     const isMatch = await bcrypt.compare(currentPassword, user.password);
+    console.log(`Current password validation: ${isMatch}`);
+
     if (!isMatch) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
+    // Generate hash for the new password
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
 
-    res.json({ message: "Password updated successfully" });
+    // Update the password directly in the database instead of using the model
+    const updateResult = await User.updateOne(
+      { _id: req.user.userId },
+      { $set: { password: hashedPassword } }
+    );
+
+    console.log(`Database update result:`, updateResult);
+
+    // Double-check that the update worked
+    const updatedUser = await User.findById(req.user.userId);
+    const newPasswordValid = await bcrypt.compare(
+      newPassword,
+      updatedUser.password
+    );
+    console.log(`New password verification: ${newPasswordValid}`);
+
+    res.json({
+      message: "Password updated successfully",
+      success: true,
+    });
   } catch (error) {
+    console.error("Password change error:", error);
     next(error);
   }
 });

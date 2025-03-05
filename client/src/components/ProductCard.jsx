@@ -1,4 +1,4 @@
-// client/src/components/ProductCard.js
+// client/src/components/ProductCard.jsx
 
 import React from 'react';
 

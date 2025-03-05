@@ -1,62 +1,59 @@
-// server/models/User.js
+// server/models/User.js - Simplified Model
 
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
 
-const userSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
+const userSchema = new mongoose.Schema(
+  {
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+    },
+    password: {
+      type: String,
+    },
+    profilePicture: {
+      type: String,
+      default: "",
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
   },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-    lowercase: true,
-  },
-  password: {
-    type: String,
-  },
-  profilePicture: {
-    type: String,
-    default: '',
-  },
-  googleId: {
-    type: String,
-    unique: true,
-    sparse: true,
-  },
-  isAdmin: {
-    type: Boolean,
-    default: false,
-  },
-}, { timestamps: true });
+  { timestamps: true }
+);
 
-userSchema.pre('save', async function(next) {
-  if (this.isModified('password') && this.password) {
-    try {
-      const salt = await bcrypt.genSalt(10);
-      this.password = await bcrypt.hash(this.password, salt);
-      next();
-    } catch (error) {
-      next(error);
-    }
-  } else {
-    next();
-  }
-});
+// Completely remove the pre-save middleware for password hashing
+// We'll handle this manually in the routes
 
-userSchema.methods.isValidPassword = async function(password) {
+// Simple validation method
+userSchema.methods.isValidPassword = async function (password) {
   try {
-    return await bcrypt.compare(password, this.password);
+    // Direct comparison using bcrypt
+    return this.password
+      ? await bcrypt.compare(password, this.password)
+      : false;
   } catch (error) {
-    throw error;
+    console.error("Password validation error:", error);
+    return false;
   }
 };
 
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

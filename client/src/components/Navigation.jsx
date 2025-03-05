@@ -1,6 +1,7 @@
-// client/src/components/Navigation.js
+
 
 // src/components/Navigation.jsx
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';

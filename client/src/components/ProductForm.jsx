@@ -1,4 +1,4 @@
-// client/src/components/ProductForm.js
+// client/src/components/ProductForm.jsx
 
 import React, { useState } from 'react';
 import api from '../api/api';

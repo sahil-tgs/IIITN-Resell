@@ -1,4 +1,4 @@
-// client/src/pages/EditProductPage.js
+// client/src/pages/EditProductPage.jsx
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
