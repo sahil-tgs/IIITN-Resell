@@ -1,4 +1,4 @@
-// ProductDetailsPage.jsx without comments section
+// client/src/pages/ProductDetailsPage.jsx
 
 import React, { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
@@ -445,4 +445,3 @@ const ProductDetailsPage = ({ isDarkMode }) => {
 };
 
 export default ProductDetailsPage;
-  

@@ -1,4 +1,4 @@
-// Updated MarketplacePage.jsx to filter out sold products
+// client/src/pages/MarketplacePage.jsx
 
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
@@ -348,5 +348,5 @@ const MarketplacePage = ({ isDarkMode }) => {
     </div>
   );
 };
-    
+
 export default MarketplacePage;
