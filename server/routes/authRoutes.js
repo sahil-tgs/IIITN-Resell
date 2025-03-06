@@ -19,9 +19,9 @@ const router = express.Router();
 // });
 
 // Apply rate limiting in production only
-if (process.env.NODE_ENV === "production") {
-  router.use(["/login", "/register"], authLimiter);
-}
+// if (process.env.NODE_ENV === "production") {
+//   router.use(["/login", "/register"], authLimiter);
+// }
 
 // Register validation
 const validateRegister = [
