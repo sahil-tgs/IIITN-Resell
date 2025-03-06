@@ -12,11 +12,11 @@ const bcrypt = require("bcryptjs");
 const router = express.Router();
 
 // Re-enable rate limiting for production
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per windowMs
-  message: "Too many login attempts, please try again after 15 minutes",
-});
+// const authLimiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 5, // 5 requests per windowMs
+//   message: "Too many login attempts, please try again after 15 minutes",
+// });
 
 // Apply rate limiting in production only
 if (process.env.NODE_ENV === "production") {
