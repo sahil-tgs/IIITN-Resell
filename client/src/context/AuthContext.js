@@ -33,7 +33,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem("token", token);
     localStorage.setItem("userId", userId);
     try {
-      const response = await axios.get(`${API_BASE_URL}/auth/profile`, {
+      const response = await axios.get(`${API_BASE_URL}/auth/profile`, {  
         headers: { Authorization: `Bearer ${token}` },
       });
       setUser({ ...response.data, token });
