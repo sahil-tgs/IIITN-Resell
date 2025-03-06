@@ -1,6 +1,6 @@
 //  client/src/pages/AddProductPage.jsx
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import API_BASE_URL from "../config/api";
@@ -36,6 +36,15 @@ const AddProductPage = ({ isDarkMode }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Cleanup preview URL when component unmounts or previewUrl changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -53,6 +62,10 @@ const AddProductPage = ({ isDarkMode }) => {
     setError("");
     setValidationErrors([]);
     setImage(file);
+    // Clean up previous preview URL if it exists
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     const url = URL.createObjectURL(file);
     setPreviewUrl(url);
   };
@@ -84,6 +97,9 @@ const AddProductPage = ({ isDarkMode }) => {
   };
 
   const clearImage = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setImage(null);
     setPreviewUrl("");
   };
@@ -136,17 +152,6 @@ const AddProductPage = ({ isDarkMode }) => {
     }
 
     try {
-      console.log("Sending request to:", `${API_BASE_URL}/products`);
-      console.log("Form data being sent:", {
-        title: formData.title.trim(),
-        description: formData.description || "",
-        price: parseInt(formData.price),
-        category: formData.category || "",
-        condition: formData.condition || "",
-        location: formData.location || "",
-        imageIncluded: !!image,
-      });
-
       // Make sure token is included
       if (!user || !user.token) {
         throw new Error("Authentication token is missing. Please login again.");
@@ -165,12 +170,9 @@ const AddProductPage = ({ isDarkMode }) => {
       );
 
       if (response.data) {
-        console.log("Product created successfully:", response.data);
         navigate("/marketplace");
       }
     } catch (err) {
-      console.error("Error adding product:", err);
-
       // Handle different types of errors more specifically
       if (
         err.message === "Authentication token is missing. Please login again."

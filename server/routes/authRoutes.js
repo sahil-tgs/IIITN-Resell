@@ -11,12 +11,17 @@ const bcrypt = require("bcryptjs");
 
 const router = express.Router();
 
-// Rate limiting is commented out for testing
-// const authLimiter = rateLimit({
-//   windowMs: 15 * 60 * 1000, // 15 minutes
-//   max: 5, // 5 requests per windowMs
-//   message: "Too many login attempts, please try again after 15 minutes",
-// });
+// Re-enable rate limiting for production
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 requests per windowMs
+  message: "Too many login attempts, please try again after 15 minutes",
+});
+
+// Apply rate limiting in production only
+if (process.env.NODE_ENV === "production") {
+  router.use(["/login", "/register"], authLimiter);
+}
 
 // Register validation
 const validateRegister = [
@@ -116,6 +121,12 @@ router.post("/login", validateLogin, async (req, res, next) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
+    // Ensure JWT_SECRET is available
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET environment variable is not set");
+      return res.status(500).json({ message: "Server configuration error" });
+    }
+
     const token = jwt.sign(
       { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -150,13 +161,23 @@ router.get(
   "/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
+    // Ensure JWT_SECRET is available
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET environment variable is not set");
+      return res.redirect("/login?error=server_configuration");
+    }
+
     const token = jwt.sign(
       { userId: req.user._id, email: req.user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
+
+    // Ensure CLIENT_URL is set
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:3000";
+
     res.redirect(
-      `${process.env.CLIENT_URL}/auth-success?token=${token}&userId=${req.user._id}`
+      `${clientUrl}/auth-success?token=${token}&userId=${req.user._id}`
     );
   }
 );

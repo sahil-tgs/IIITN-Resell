@@ -10,6 +10,14 @@ const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const bcrypt = require("bcryptjs");
 
+// Configure cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+  timeout: 60000, // Set timeout to 60 seconds for uploads
+});
+
 // Cloudinary storage setup
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
@@ -18,6 +26,7 @@ const storage = new CloudinaryStorage({
     allowed_formats: ["jpg", "png", "jpeg"],
   },
 });
+
 const upload = multer({
   storage: storage,
   limits: {

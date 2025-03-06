@@ -164,15 +164,15 @@ const EditProductPage = ({ isDarkMode }) => {
         submitData.append("image", image);
       }
 
-      console.log("Updating product with data:", {
-        title: formData.title.trim(),
-        description: formData.description || "",
-        price: parseInt(formData.price),
-        category: formData.category || "",
-        condition: formData.condition || "",
-        location: formData.location || "",
-        imageUpdated: !!image,
-      });
+      // console.log("Updating product with data:", {
+      //   title: formData.title.trim(),
+      //   description: formData.description || "",
+      //   price: parseInt(formData.price),
+      //   category: formData.category || "",
+      //   condition: formData.condition || "",
+      //   location: formData.location || "",
+      //   imageUpdated: !!image,
+      // });
 
       const response = await axios.put(
         `${API_BASE_URL}/products/${id}`,
@@ -187,7 +187,7 @@ const EditProductPage = ({ isDarkMode }) => {
       );
 
       if (response.data) {
-        console.log("Product updated successfully:", response.data);
+        // console.log("Product updated successfully:", response.data);
         navigate(`/product/${id}`);
       }
     } catch (err) {

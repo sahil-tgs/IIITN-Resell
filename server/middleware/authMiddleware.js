@@ -5,6 +5,12 @@ const User = require("../models/User");
 
 const verifyToken = async (req, res, next) => {
   try {
+    // Check if JWT_SECRET is configured
+    if (!process.env.JWT_SECRET) {
+      console.error("JWT_SECRET is not defined in environment variables");
+      return res.status(500).json({ message: "Server configuration error." });
+    }
+
     const authHeader = req.header("Authorization");
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {

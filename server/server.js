@@ -29,12 +29,38 @@ const apiLimiter = rateLimit({
 });
 app.use("/api/", apiLimiter);
 
-// CORS Configuration
+// CORS Configuration - Fix for trailing slashes
 const corsOptions = {
-  origin:
-    process.env.NODE_ENV === "production"
-      ? process.env.PRODUCTION_CLIENT_URL || process.env.CLIENT_URL
-      : process.env.CLIENT_URL,
+  origin: function (origin, callback) {
+    // For development testing
+    if (!origin) return callback(null, true);
+
+    // Get allowed origins
+    const allowedOrigins =
+      process.env.NODE_ENV === "production"
+        ? [process.env.PRODUCTION_CLIENT_URL, process.env.CLIENT_URL].filter(
+            Boolean
+          )
+        : [process.env.CLIENT_URL];
+
+    // Remove any trailing slashes
+    const formattedOrigin = origin.replace(/\/$/, "");
+    const formattedAllowedOrigins = allowedOrigins.map((o) =>
+      o ? o.replace(/\/$/, "") : o
+    );
+
+    if (formattedAllowedOrigins.indexOf(formattedOrigin) !== -1 || !origin) {
+      callback(null, true);
+    } else {
+      console.log(
+        "CORS blocked for origin:",
+        origin,
+        "Allowed origins:",
+        formattedAllowedOrigins
+      );
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };
