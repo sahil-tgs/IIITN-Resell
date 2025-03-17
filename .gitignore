@@ -18,3 +18,5 @@ yarn-error.log*
 # Optional: OS generated files
 .DS_Store
 Thumbs.db
+
+.idea
