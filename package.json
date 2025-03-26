@@ -1,9 +1,16 @@
 {
     "name": "iiitn-resell",
-    "version": "0.1.0",
-    "description": "A college marketplace for second-hand goods",
+    "version": "2.0.0",
+    "description": "A college marketplace for second-hand goods — React frontend + Java Spring Boot microservices backend.",
     "private": true,
     "scripts": {
-        "client": "npm start --prefix client"
-    }
+        "client":      "npm start --prefix client",
+        "infra:up":    "docker compose up -d",
+        "infra:down":  "docker compose down",
+        "infra:reset": "docker compose down -v",
+        "build:java":  "mvn -T 1C clean package -DskipTests"
+    },
+    "keywords": ["marketplace", "spring-boot", "microservices", "kafka", "rabbitmq", "elasticsearch"],
+    "author": "",
+    "license": "ISC"
 }
