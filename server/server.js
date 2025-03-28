@@ -225,6 +225,7 @@ io.on("connection", (socket) => {
       });
 
       const savedMessage = await newMessage.save();
+      console.log("Message saved:", savedMessage._id);
 
       // Update conversation with last message
       const conversation = await Conversation.findById(conversationId);
@@ -249,13 +250,17 @@ io.on("connection", (socket) => {
           .populate("sender", "username profilePicture")
           .populate("productRef", "title");
 
+      console.log("Emitting receive_message to room:", conversationId);
       // Emit to all participants in the conversation
       io.to(conversationId).emit("receive_message", populatedMessage);
 
-      // Send notification to other participants who are not in the room
+      // Send notification to other participants individually
       conversation.participants.forEach(participant => {
-        if (participant.toString() !== socket.userId.toString()) {
-          io.to(participant.toString()).emit("new_message_notification", {
+        const participantId = participant.toString();
+        if (participantId !== socket.userId.toString()) {
+          console.log("Sending notification to participant:", participantId);
+          // Send to their personal room
+          io.to(participantId).emit("new_message_notification", {
             conversationId,
             message: populatedMessage
           });
