@@ -334,6 +334,8 @@ router.put(
 // Helper function to extract publicId from Cloudinary URL
 function extractPublicId(url) {
   try {
+    if (!url) return null;
+    
     const parts = url.split("/");
     const fileName = parts[parts.length - 1];
     const publicIdWithExtension = fileName.split(".")[0]; // Remove extension

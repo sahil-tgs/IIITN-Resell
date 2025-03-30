@@ -1,43 +1,76 @@
 // client/src/components/ProductForm.jsx
 
-import React, { useState } from 'react';
-import api from '../api/api';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import API_BASE_URL from "../config/api";
+import { useAuth } from "../context/AuthContext";
 
 const ProductForm = ({ product = null, onSubmit }) => {
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
-    title: product?.title || '',
-    description: product?.description || '',
-    price: product?.price || '',
-    category: product?.category || '',
-    condition: product?.condition || '',
-    location: product?.location || '',
+    title: product?.title || "",
+    description: product?.description || "",
+    price: product?.price || "",
+    category: product?.category || "",
+    condition: product?.condition || "",
+    location: product?.location || "",
     image: null,
   });
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  // Clean up URL objects when component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleFileChange = (e) => {
-    setFormData({ ...formData, image: e.target.files[0] });
+    const file = e.target.files[0];
+    if (file) {
+      // Clean up previous preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setFormData({ ...formData, image: file });
+      setPreviewUrl(URL.createObjectURL(file));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const data = new FormData();
     for (const key in formData) {
-      data.append(key, formData[key]);
+      if (formData[key] !== null) {
+        data.append(key, formData[key]);
+      }
     }
 
     try {
       if (product) {
-        await api.put(`/products/${product._id}`, data);
+        await axios.put(`${API_BASE_URL}/products/${product._id}`, data, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
       } else {
-        await api.post('/products', data);
+        await axios.post(`${API_BASE_URL}/products`, data, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
       }
       onSubmit();
     } catch (error) {
-      console.error('Error submitting product', error);
+      console.error("Error submitting product", error);
     }
   };
 
@@ -101,10 +134,18 @@ const ProductForm = ({ product = null, onSubmit }) => {
         name="image"
         onChange={handleFileChange}
         className="w-full p-2 mb-4 border rounded"
-        required
+        required={!product}
       />
-      <button type="submit" className="bg-blue-500 text-white py-2 px-4 rounded">
-        {product ? 'Update Product' : 'Create Product'}
+      {previewUrl && (
+        <div className="mb-4">
+          <img src={previewUrl} alt="Preview" className="h-40 object-contain" />
+        </div>
+      )}
+      <button
+        type="submit"
+        className="bg-blue-500 text-white py-2 px-4 rounded"
+      >
+        {product ? "Update Product" : "Create Product"}
       </button>
     </form>
   );

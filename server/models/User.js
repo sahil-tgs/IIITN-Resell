@@ -17,6 +17,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
       lowercase: true,
+      index: true, // Add index for query performance
     },
     password: {
       type: String,
@@ -29,6 +30,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       unique: true,
       sparse: true,
+      index: true, // Add index for query performance
     },
     isAdmin: {
       type: Boolean,
